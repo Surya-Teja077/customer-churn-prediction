@@ -23,7 +23,7 @@ with col1:
     monthly_charges = st.number_input("Monthly Charges", 0.0, 1000.0)
 
 with col2:
-    total_charges = st.number_input("Total Charges", 0.0, 10000.0)
+    total_charges = st.number_input("Total Charges", min_value=0.0, max_value=50000.0, step=100.0)
     contract = st.selectbox(
         "Contract Type",
         ["Month-to-month", "One year", "Two year"]
@@ -58,3 +58,4 @@ if st.button("🚀 Predict Churn"):
 
 st.markdown("---")
 st.markdown("<center>Built by <b>KADIYALA SURYATEJA</b> | ANNAMACHARYA UNIVERSITY</center>", unsafe_allow_html=True)
+
