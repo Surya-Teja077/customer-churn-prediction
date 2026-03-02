@@ -2,61 +2,60 @@ import streamlit as st
 import joblib
 import numpy as np
 
-# Page settings
+# Page config
 st.set_page_config(
-    page_title="Customer Churn Prediction",
+    page_title="Customer Churn Predictor",
     page_icon="📊",
     layout="centered"
 )
 
-# Load model and scaler
+# Custom CSS for clean look
+st.markdown("""
+    <style>
+        body {
+            background-color: #f5f7fa;
+        }
+        .main {
+            background-color: #ffffff;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0px 4px 20px rgba(0,0,0,0.05);
+        }
+        h1 {
+            text-align: center;
+        }
+        .result-box {
+            padding: 1rem;
+            border-radius: 10px;
+            margin-top: 1rem;
+            text-align: center;
+            font-size: 18px;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
+# Load model
 model = joblib.load("best_model.pkl")
 scaler = joblib.load("scaler.pkl")
 
-# Header
-st.markdown(
-    "<h1 style='text-align: center; color: #4CAF50;'>📊 Customer Churn Prediction</h1>",
-    unsafe_allow_html=True
-)
-st.markdown(
-    "<p style='text-align: center;'>Predict customer churn probability using Machine Learning</p>",
-    unsafe_allow_html=True
-)
+st.title("📊 Customer Churn Prediction")
+
+st.write("Enter customer details to estimate churn probability.")
 
 st.markdown("---")
 
-# Layout
-col1, col2 = st.columns(2)
+# Inputs
+tenure = st.slider("Tenure (months)", 0, 120, 12)
+monthly_charges = st.slider("Monthly Charges", 0.0, 2000.0, 75.0)
+contract = st.selectbox(
+    "Contract Type",
+    ["Month-to-month", "One year", "Two year"]
+)
 
-with col1:
-    tenure = st.number_input("Tenure (months)", min_value=0, max_value=120, step=1)
-    monthly_charges = st.number_input(
-        "Monthly Charges",
-        min_value=0.0,
-        max_value=2000.0,
-        step=10.0
-    )
+# Auto calculate total charges
+total_charges = tenure * monthly_charges
+st.caption(f"Estimated Total Charges: {total_charges:.2f}")
 
-with col2:
-    auto_calc = st.checkbox("Auto-calculate Total Charges (tenure × monthly charges)")
-    
-    if auto_calc:
-        total_charges = tenure * monthly_charges
-        st.info(f"Total Charges: {total_charges:.2f}")
-    else:
-        total_charges = st.number_input(
-            "Total Charges",
-            min_value=0.0,
-            max_value=50000.0,
-            step=100.0
-        )
-
-    contract = st.selectbox(
-        "Contract Type",
-        ["Month-to-month", "One year", "Two year"]
-    )
-
-# Contract mapping
 contract_map = {
     "Month-to-month": 0,
     "One year": 1,
@@ -65,7 +64,7 @@ contract_map = {
 
 st.markdown("---")
 
-if st.button("🚀 Predict Churn"):
+if st.button("Predict Churn"):
 
     features = np.array([
         [tenure, monthly_charges, total_charges, contract_map[contract]]
@@ -76,28 +75,28 @@ if st.button("🚀 Predict Churn"):
     prediction = model.predict(features_scaled)
     probability = model.predict_proba(features_scaled)[0][1]
 
-    st.subheader("📈 Prediction Result")
-
-    # Risk Level Logic
+    # Risk level
     if probability < 0.4:
-        risk_level = "Low Risk 🟢"
+        risk_color = "#4CAF50"
+        risk_text = "Low Risk"
     elif probability < 0.7:
-        risk_level = "Medium Risk 🟡"
+        risk_color = "#FF9800"
+        risk_text = "Medium Risk"
     else:
-        risk_level = "High Risk 🔴"
+        risk_color = "#F44336"
+        risk_text = "High Risk"
 
-    if prediction[0] == 1:
-        st.error("⚠️ Customer is likely to CHURN")
-    else:
-        st.success("✅ Customer is likely to STAY")
-
-    st.markdown(f"### 🔢 Churn Probability: {probability*100:.2f}%")
-    st.markdown(f"### 🚦 Risk Level: {risk_level}")
+    st.markdown(
+        f"""
+        <div class="result-box" style="background-color:{risk_color}20; border:1px solid {risk_color};">
+            <b>Churn Probability:</b> {probability*100:.2f}% <br>
+            <b>Risk Level:</b> {risk_text}
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
     st.progress(float(probability))
 
 st.markdown("---")
-st.markdown(
-    "<center><b>Built by KADIYALA SURYATEJA</b> | ANNAMACHARYA UNIVERSITY</center>",
-    unsafe_allow_html=True
-)
+st.caption("Built by KADIYALA SURYATEJA | ANNAMACHARYA UNIVERSITY")
