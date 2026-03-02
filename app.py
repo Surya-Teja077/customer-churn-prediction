@@ -2,59 +2,48 @@ import streamlit as st
 import joblib
 import numpy as np
 
-# Page config
+# Page Config
 st.set_page_config(
-    page_title="Customer Churn Predictor",
+    page_title="Churn Analytics Dashboard",
     page_icon="📊",
-    layout="centered"
+    layout="wide"
 )
-
-# Custom CSS for clean look
-st.markdown("""
-    <style>
-        body {
-            background-color: #f5f7fa;
-        }
-        .main {
-            background-color: #ffffff;
-            padding: 2rem;
-            border-radius: 12px;
-            box-shadow: 0px 4px 20px rgba(0,0,0,0.05);
-        }
-        h1 {
-            text-align: center;
-        }
-        .result-box {
-            padding: 1rem;
-            border-radius: 10px;
-            margin-top: 1rem;
-            text-align: center;
-            font-size: 18px;
-        }
-    </style>
-""", unsafe_allow_html=True)
 
 # Load model
 model = joblib.load("best_model.pkl")
 scaler = joblib.load("scaler.pkl")
 
-st.title("📊 Customer Churn Prediction")
+# Custom Styling
+st.markdown("""
+<style>
+.main {
+    background-color: #f4f6f9;
+}
+.metric-card {
+    padding: 20px;
+    border-radius: 12px;
+    background: white;
+    box-shadow: 0px 4px 15px rgba(0,0,0,0.05);
+    text-align: center;
+}
+</style>
+""", unsafe_allow_html=True)
 
-st.write("Enter customer details to estimate churn probability.")
+# Header
+st.markdown("# 📊 Customer Churn Analytics Dashboard")
+st.markdown("Predict churn probability and assess customer risk profile.")
 
 st.markdown("---")
 
-# Inputs
-tenure = st.slider("Tenure (months)", 0, 120, 12)
-monthly_charges = st.slider("Monthly Charges", 0.0, 2000.0, 75.0)
-contract = st.selectbox(
+# Sidebar Inputs
+st.sidebar.header("Customer Inputs")
+
+tenure = st.sidebar.slider("Tenure (months)", 0, 120, 12)
+monthly_charges = st.sidebar.slider("Monthly Charges", 0.0, 2000.0, 75.0)
+contract = st.sidebar.selectbox(
     "Contract Type",
     ["Month-to-month", "One year", "Two year"]
 )
-
-# Auto calculate total charges
-total_charges = tenure * monthly_charges
-st.caption(f"Estimated Total Charges: {total_charges:.2f}")
 
 contract_map = {
     "Month-to-month": 0,
@@ -62,9 +51,13 @@ contract_map = {
     "Two year": 2
 }
 
-st.markdown("---")
+total_charges = tenure * monthly_charges
 
-if st.button("Predict Churn"):
+st.sidebar.markdown(f"**Estimated Total Charges:** {total_charges:.2f}")
+
+st.sidebar.markdown("---")
+
+if st.sidebar.button("Predict Churn"):
 
     features = np.array([
         [tenure, monthly_charges, total_charges, contract_map[contract]]
@@ -75,27 +68,29 @@ if st.button("Predict Churn"):
     prediction = model.predict(features_scaled)
     probability = model.predict_proba(features_scaled)[0][1]
 
-    # Risk level
+    # Risk classification
     if probability < 0.4:
-        risk_color = "#4CAF50"
-        risk_text = "Low Risk"
+        risk = "Low Risk 🟢"
     elif probability < 0.7:
-        risk_color = "#FF9800"
-        risk_text = "Medium Risk"
+        risk = "Medium Risk 🟡"
     else:
-        risk_color = "#F44336"
-        risk_text = "High Risk"
+        risk = "High Risk 🔴"
 
-    st.markdown(
-        f"""
-        <div class="result-box" style="background-color:{risk_color}20; border:1px solid {risk_color};">
-            <b>Churn Probability:</b> {probability*100:.2f}% <br>
-            <b>Risk Level:</b> {risk_text}
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+    col1, col2, col3 = st.columns(3)
 
+    with col1:
+        st.metric("Churn Probability", f"{probability*100:.2f}%")
+
+    with col2:
+        st.metric("Risk Level", risk)
+
+    with col3:
+        result_text = "Likely to CHURN" if prediction[0] == 1 else "Likely to STAY"
+        st.metric("Prediction", result_text)
+
+    st.markdown("---")
+
+    st.subheader("Probability Gauge")
     st.progress(float(probability))
 
 st.markdown("---")
