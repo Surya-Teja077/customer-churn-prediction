@@ -19,6 +19,15 @@ st.markdown("""
 .main {
     background-color: #f4f6f9;
 }
+.big-number {
+    font-size: 70px;
+    font-weight: bold;
+    text-align: center;
+}
+.sub-text {
+    text-align: center;
+    font-size: 18px;
+}
 .metric-card {
     padding: 20px;
     border-radius: 12px;
@@ -32,7 +41,6 @@ st.markdown("""
 # Header
 st.markdown("# 📊 Customer Churn Analytics Dashboard")
 st.markdown("Predict churn probability and assess customer risk profile.")
-
 st.markdown("---")
 
 # Sidebar Inputs
@@ -52,9 +60,7 @@ contract_map = {
 }
 
 total_charges = tenure * monthly_charges
-
 st.sidebar.markdown(f"**Estimated Total Charges:** {total_charges:.2f}")
-
 st.sidebar.markdown("---")
 
 if st.sidebar.button("Predict Churn"):
@@ -71,27 +77,34 @@ if st.sidebar.button("Predict Churn"):
     # Risk classification
     if probability < 0.4:
         risk = "Low Risk 🟢"
+        color = "#4CAF50"
     elif probability < 0.7:
         risk = "Medium Risk 🟡"
+        color = "#FF9800"
     else:
         risk = "High Risk 🔴"
+        color = "#F44336"
 
-    col1, col2, col3 = st.columns(3)
+    col1, col2 = st.columns(2)
 
     with col1:
-        st.metric("Churn Probability", f"{probability*100:.2f}%")
+        st.metric("Prediction",
+                  "Likely to CHURN" if prediction[0] == 1 else "Likely to STAY")
 
-    with col2:
         st.metric("Risk Level", risk)
 
-    with col3:
-        result_text = "Likely to CHURN" if prediction[0] == 1 else "Likely to STAY"
-        st.metric("Prediction", result_text)
-
-    st.markdown("---")
-
-    st.subheader("Probability Gauge")
-    st.progress(float(probability))
+    with col2:
+        st.markdown(
+            f"""
+            <div class="big-number" style="color:{color};">
+                {probability*100:.2f}%
+            </div>
+            <div class="sub-text">
+                Churn Probability
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
 st.markdown("---")
 st.caption("Built by KADIYALA SURYATEJA | ANNAMACHARYA UNIVERSITY")
